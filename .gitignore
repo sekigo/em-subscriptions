@@ -1,0 +1,20 @@
+# Binaries
+/bin/
+/em-subscriptions
+*.exe
+*.test
+*.out
+
+# Local env
+.env
+.env.local
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Go
+vendor/
+coverage.out

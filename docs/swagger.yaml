@@ -1,0 +1,258 @@
+basePath: /api/v1
+definitions:
+  internal_handler.ErrorResponse:
+    properties:
+      error:
+        example: 'validation error: end_date must be on or after start_date'
+        type: string
+    type: object
+  internal_handler.SubscriptionRequest:
+    properties:
+      end_date:
+        description: Optional subscription end month, format MM-YYYY.
+        example: 12-2025
+        type: string
+      price:
+        description: Monthly price in rubles (whole rubles, no kopecks).
+        example: 400
+        type: integer
+      service_name:
+        description: Name of the subscription service.
+        example: Yandex Plus
+        type: string
+      start_date:
+        description: Subscription start month, format MM-YYYY.
+        example: 07-2025
+        type: string
+      user_id:
+        description: User UUID. The service does NOT validate user existence.
+        example: 60601fee-2bf1-4721-ae6f-7636e79a0cba
+        type: string
+    type: object
+  internal_handler.SubscriptionResponse:
+    properties:
+      created_at:
+        type: string
+      end_date:
+        example: 12-2025
+        type: string
+      id:
+        type: string
+      price:
+        type: integer
+      service_name:
+        type: string
+      start_date:
+        example: 07-2025
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  internal_handler.TotalResponse:
+    properties:
+      period_from:
+        example: 01-2025
+        type: string
+      period_to:
+        example: 12-2025
+        type: string
+      service_name:
+        type: string
+      total:
+        example: 4800
+        type: integer
+      user_id:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: REST service for aggregating user online subscriptions.
+  title: EM Subscriptions API
+  version: "1.0"
+paths:
+  /subscriptions:
+    get:
+      parameters:
+      - description: Filter by user UUID
+        in: query
+        name: user_id
+        type: string
+      - description: Filter by service name (exact match)
+        in: query
+        name: service_name
+        type: string
+      - description: Page size (default 50, max 200)
+        in: query
+        name: limit
+        type: integer
+      - description: Page offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_handler.SubscriptionResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: List subscriptions
+      tags:
+      - subscriptions
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Subscription payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.SubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_handler.SubscriptionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Create subscription
+      tags:
+      - subscriptions
+  /subscriptions/{id}:
+    delete:
+      parameters:
+      - description: Subscription UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Delete subscription
+      tags:
+      - subscriptions
+    get:
+      parameters:
+      - description: Subscription UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.SubscriptionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Get subscription by ID
+      tags:
+      - subscriptions
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Subscription UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Subscription payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.SubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.SubscriptionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Update subscription
+      tags:
+      - subscriptions
+  /subscriptions/total:
+    get:
+      description: Sums monthly price * number of months the subscription is active
+        inside [period_from, period_to]. Both bounds are inclusive whole months.
+      parameters:
+      - description: Start month, MM-YYYY
+        example: 01-2025
+        in: query
+        name: period_from
+        required: true
+        type: string
+      - description: End month, MM-YYYY
+        example: 12-2025
+        in: query
+        name: period_to
+        required: true
+        type: string
+      - description: Filter by user UUID
+        in: query
+        name: user_id
+        type: string
+      - description: Filter by service name (exact match)
+        in: query
+        name: service_name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.TotalResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Total cost over a period
+      tags:
+      - subscriptions
+swagger: "2.0"
